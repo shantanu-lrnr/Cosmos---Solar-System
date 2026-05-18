@@ -312,6 +312,12 @@ export const PLANETS: Planet[] = [
     color: { primary: '#9fe1e0', secondary: '#3a7c84', glow: '#b8f0ef' },
     atmosphere: { color: '#a5f3fc', intensity: 0.5 },
     ring: { inner: 2.6, outer: 3.2, color: '#9fe1e0', opacity: 0.35, tilt: 1.5 },
+    moons: [
+      { id: 'miranda', name: 'Miranda', radius: 0.08, distance: 4.0, speed: 1.6, color: '#cdd6db' },
+      { id: 'ariel', name: 'Ariel', radius: 0.13, distance: 5.0, speed: 1.2, color: '#d8e2e6' },
+      { id: 'titania', name: 'Titania', radius: 0.18, distance: 6.5, speed: 0.85, color: '#b8a89a' },
+      { id: 'oberon', name: 'Oberon', radius: 0.16, distance: 8.0, speed: 0.70, color: '#8e8076' },
+    ],
     facts: {
       diameter: '50,724 km',
       mass: '8.68 × 10²⁵ kg',
@@ -345,7 +351,9 @@ export const PLANETS: Planet[] = [
     color: { primary: '#3b6fe0', secondary: '#1e3a8a', glow: '#5b8def' },
     atmosphere: { color: '#5b8def', intensity: 0.9 },
     moons: [
+      { id: 'proteus', name: 'Proteus', radius: 0.10, distance: 3.2, speed: 1.4, color: '#7a7e85' },
       { id: 'triton', name: 'Triton', radius: 0.18, distance: 4.5, speed: 1.0, color: '#cdd6e6' },
+      { id: 'nereid', name: 'Nereid', radius: 0.08, distance: 6.5, speed: 0.55, color: '#b9b6a8' },
     ],
     facts: {
       diameter: '49,244 km',

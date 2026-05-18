@@ -118,7 +118,16 @@ function PlanetSide({ side, id, setId, other }: { side: 'left' | 'right'; id: st
         >
           <div
             className="w-24 h-24 md:w-32 md:h-32 rounded-full relative"
-            style={{
+            style={p.id === 'earth' ? {
+              backgroundImage: `
+                radial-gradient(circle at 30% 28%, rgba(255,255,255,0.32) 0%, transparent 38%),
+                radial-gradient(circle at 72% 75%, rgba(0,0,0,0.72) 50%, transparent 95%),
+                url('/textures/earth/2k_earth_daymap.jpg')
+              `,
+              backgroundSize: '100%, 100%, 230%',
+              backgroundPosition: 'center, center, 35% 50%',
+              boxShadow: `0 0 60px ${p.color.glow}55, inset -14px -14px 38px rgba(0,0,0,0.55), inset 8px 8px 30px rgba(120,180,255,0.10)`,
+            } : {
               background: `radial-gradient(circle at 30% 30%, ${p.color.primary}, ${p.color.secondary} 70%, #000 100%)`,
               boxShadow: `0 0 60px ${p.color.glow}55, inset -15px -15px 40px rgba(0,0,0,0.55)`,
             }}

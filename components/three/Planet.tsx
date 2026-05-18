@@ -5,6 +5,7 @@ import { Html } from '@react-three/drei';
 import * as THREE from 'three';
 import { useStore } from '@/lib/store';
 import type { Planet as PlanetData } from '@/lib/planets';
+import EarthBody from './EarthBody';
 
 const planetVert = /* glsl */ `
   varying vec3 vNormal;
@@ -177,37 +178,47 @@ export default function Planet({ planet }: Props) {
   return (
     <group ref={groupRef} name={`planet-${planet.id}`}>
       <group ref={tiltRef} rotation={[0, 0, planet.axialTilt]}>
-        {/* Planet sphere */}
-        <mesh
-          ref={meshRef}
-          onPointerOver={(e) => { e.stopPropagation(); setHovered(planet.id); document.body.style.cursor = 'pointer'; }}
-          onPointerOut={(e) => { e.stopPropagation(); setHovered(null); document.body.style.cursor = 'auto'; }}
-          onClick={(e) => { e.stopPropagation(); setSelected(planet.id); }}
-        >
-          <sphereGeometry args={[planet.radius, 64, 64]} />
-          <shaderMaterial
-            ref={matRef}
-            vertexShader={planetVert}
-            fragmentShader={planetFrag}
-            uniforms={uniforms}
+        {/* Planet sphere — Earth gets a dedicated cinematic body */}
+        {planet.id === 'earth' ? (
+          <EarthBody
+            planet={planet}
+            onPointerOver={(e) => { e.stopPropagation(); setHovered(planet.id); document.body.style.cursor = 'pointer'; }}
+            onPointerOut={(e) => { e.stopPropagation(); setHovered(null); document.body.style.cursor = 'auto'; }}
+            onClick={(e) => { e.stopPropagation(); setSelected(planet.id); }}
           />
-        </mesh>
+        ) : (
+          <>
+            <mesh
+              ref={meshRef}
+              onPointerOver={(e) => { e.stopPropagation(); setHovered(planet.id); document.body.style.cursor = 'pointer'; }}
+              onPointerOut={(e) => { e.stopPropagation(); setHovered(null); document.body.style.cursor = 'auto'; }}
+              onClick={(e) => { e.stopPropagation(); setSelected(planet.id); }}
+            >
+              <sphereGeometry args={[planet.radius, 64, 64]} />
+              <shaderMaterial
+                ref={matRef}
+                vertexShader={planetVert}
+                fragmentShader={planetFrag}
+                uniforms={uniforms}
+              />
+            </mesh>
 
-        {/* Atmosphere */}
-        {planet.atmosphere && (
-          <mesh scale={1.06}>
-            <sphereGeometry args={[planet.radius, 48, 48]} />
-            <shaderMaterial
-              ref={atmoMatRef}
-              transparent
-              depthWrite={false}
-              blending={THREE.AdditiveBlending}
-              side={THREE.BackSide}
-              uniforms={atmoUniforms}
-              vertexShader={atmoVert}
-              fragmentShader={atmoFrag}
-            />
-          </mesh>
+            {planet.atmosphere && (
+              <mesh scale={1.06}>
+                <sphereGeometry args={[planet.radius, 48, 48]} />
+                <shaderMaterial
+                  ref={atmoMatRef}
+                  transparent
+                  depthWrite={false}
+                  blending={THREE.AdditiveBlending}
+                  side={THREE.BackSide}
+                  uniforms={atmoUniforms}
+                  vertexShader={atmoVert}
+                  fragmentShader={atmoFrag}
+                />
+              </mesh>
+            )}
+          </>
         )}
 
         {/* Ring system */}

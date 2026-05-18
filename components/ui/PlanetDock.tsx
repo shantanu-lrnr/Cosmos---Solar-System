@@ -31,8 +31,19 @@ export default function PlanetDock() {
                 ${active ? 'bg-white/8' : 'hover:bg-white/5'}`}
             >
               <div
-                className="w-5 h-5 rounded-full relative shrink-0"
-                style={{
+                className="w-5 h-5 rounded-full relative shrink-0 bg-cover bg-center"
+                style={p.id === 'earth' ? {
+                  backgroundImage: `
+                    radial-gradient(circle at 30% 28%, rgba(255,255,255,0.22) 0%, transparent 36%),
+                    radial-gradient(circle at 72% 75%, rgba(0,0,0,0.55) 55%, transparent 92%),
+                    url('/textures/earth/2k_earth_daymap.jpg')
+                  `,
+                  backgroundSize: '100%, 100%, 220%',
+                  backgroundPosition: 'center, center, 38% 50%',
+                  boxShadow: active
+                    ? `0 0 18px ${p.color.glow}, inset 0 0 6px rgba(0,0,0,0.4)`
+                    : `0 0 0 1px rgba(255,255,255,0.08), inset 0 0 6px rgba(0,0,0,0.4)`,
+                } : {
                   background: `radial-gradient(circle at 30% 30%, ${p.color.primary}, ${p.color.secondary})`,
                   boxShadow: active
                     ? `0 0 18px ${p.color.glow}, inset 0 0 6px rgba(0,0,0,0.4)`
@@ -55,7 +66,7 @@ export default function PlanetDock() {
               {active && (
                 <motion.span
                   layoutId="dock-bar"
-                  className="absolute -left-1 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-full bg-cosmos-accent"
+                  className="absolute -left-1.5 inset-y-1 w-[3px] rounded-full bg-cosmos-accent"
                   style={{ boxShadow: '0 0 10px #7dd3fc' }}
                 />
               )}
