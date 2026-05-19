@@ -1,6 +1,6 @@
 'use client';
 import { useRef, useMemo, useState } from 'react';
-import { useFrame } from '@react-three/fiber';
+import { useFrame, useThree } from '@react-three/fiber';
 import { Html } from '@react-three/drei';
 import * as THREE from 'three';
 import { useStore } from '@/lib/store';
@@ -119,10 +119,14 @@ export default function Planet({ planet }: Props) {
   const hoveredId = useStore(s => s.hoveredId);
   const showLabels = useStore(s => s.showLabels);
   const view = useStore(s => s.view);
+  const introDone = useStore(s => s.introDone);
 
   const [labelHover, setLabelHover] = useState(false);
   const isFocused = selectedId === planet.id;
   const isHovered = hoveredId === planet.id || labelHover;
+
+  const labelWrapRef = useRef<HTMLDivElement>(null);
+  const camera = useThree(s => s.camera);
 
   const typeVal = planet.type === 'rocky' ? 0 : planet.type === 'gas' ? 1 : 2;
 
@@ -168,10 +172,20 @@ export default function Planet({ planet }: Props) {
     }
     if (matRef.current) {
       matRef.current.uniforms.uTime.value = state.clock.elapsedTime;
-      // Sun direction relative to planet
-      const sunDir = new THREE.Vector3().sub(groupRef.current.position).normalize();
-      matRef.current.uniforms.uSunDir.value.copy(sunDir);
+      // Sun direction relative to planet — write straight into uniform, no alloc
+      const sunDir = matRef.current.uniforms.uSunDir.value as THREE.Vector3;
+      sunDir.copy(groupRef.current.position).multiplyScalar(-1).normalize();
       if (atmoMatRef.current) atmoMatRef.current.uniforms.uSunDir.value.copy(sunDir);
+    }
+
+    // Clamp label scale by camera distance so close zoom doesn't blow it up.
+    if (labelWrapRef.current && groupRef.current) {
+      const dist = camera.position.distanceTo(groupRef.current.position);
+      // dist  8 → scale 1.1   (close)
+      // dist 80 → scale 0.7   (far)
+      const t = Math.max(0, Math.min(1, (dist - 8) / 72));
+      const scale = 1.1 - t * 0.4;
+      labelWrapRef.current.style.transform = `scale(${scale.toFixed(3)})`;
     }
   });
 
@@ -259,7 +273,13 @@ export default function Planet({ planet }: Props) {
 
         {/* Moons */}
         {planet.moons?.map((moon) => (
-          <Moon key={moon.id} moon={moon} planetRadius={planet.radius} />
+          <Moon
+            key={moon.id}
+            moon={moon}
+            planetRadius={planet.radius}
+            parentPlanetColor={planet.color.glow}
+            parentGroupRef={groupRef}
+          />
         ))}
 
         {/* Focus indicator */}
@@ -271,53 +291,288 @@ export default function Planet({ planet }: Props) {
         )}
       </group>
 
-      {/* Label */}
-      {showLabels && view === 'explore' && (
+      {/* Label — fixed-screen-size with a gentle distance-clamped scale */}
+      {showLabels && view === 'explore' && introDone && (
         <Html
           center
           position={[0, planet.radius * 1.9 + 0.4, 0]}
-          distanceFactor={18}
           style={{ pointerEvents: 'auto' }}
+          zIndexRange={[20, 0]}
         >
-          <button
-            onClick={() => setSelected(planet.id)}
-            onMouseEnter={() => { setLabelHover(true); setHovered(planet.id); }}
-            onMouseLeave={() => { setLabelHover(false); setHovered(null); }}
-            className={`group whitespace-nowrap px-2.5 py-1 rounded-full text-[11px] font-medium tracking-wider uppercase border transition-all duration-300
-              ${isHovered || isFocused
-                ? 'bg-white/15 border-white/40 text-white scale-110'
-                : 'bg-black/30 border-white/10 text-white/80 hover:bg-white/10'}
-            `}
-            style={{
-              boxShadow: isHovered || isFocused ? `0 0 24px ${planet.color.glow}80` : 'none',
-              backdropFilter: 'blur(8px)',
-            }}
+          <div
+            ref={labelWrapRef}
+            style={{ transformOrigin: 'center', willChange: 'transform' }}
           >
-            <span className="inline-block w-1.5 h-1.5 rounded-full mr-1.5 align-middle"
-              style={{ background: planet.color.glow, boxShadow: `0 0 8px ${planet.color.glow}` }} />
-            {planet.name}
-          </button>
+            <button
+              onClick={() => setSelected(planet.id)}
+              onMouseEnter={() => { setLabelHover(true); setHovered(planet.id); }}
+              onMouseLeave={() => { setLabelHover(false); setHovered(null); }}
+              className={`group whitespace-nowrap px-2.5 py-1 rounded-full text-[11px] font-medium tracking-wider uppercase border transition-all duration-300
+                ${isHovered || isFocused
+                  ? 'bg-white/15 border-white/40 text-white scale-110'
+                  : 'bg-black/30 border-white/10 text-white/80 hover:bg-white/10'}
+              `}
+              style={{
+                boxShadow: isHovered || isFocused ? `0 0 24px ${planet.color.glow}80` : 'none',
+                backdropFilter: 'blur(8px)',
+              }}
+            >
+              <span className="inline-block w-1.5 h-1.5 rounded-full mr-1.5 align-middle"
+                style={{ background: planet.color.glow, boxShadow: `0 0 8px ${planet.color.glow}` }} />
+              {planet.name}
+            </button>
+          </div>
         </Html>
       )}
     </group>
   );
 }
 
-function Moon({ moon, planetRadius }: { moon: PlanetData['moons'][number] extends infer T ? T : never; planetRadius: number }) {
+// Reusable temp vectors so per-frame moon updates allocate nothing.
+const _moonWorld = new THREE.Vector3();
+const _sunDirTmp = new THREE.Vector3();
+const _bounceDirTmp = new THREE.Vector3();
+
+type MoonType = 0 | 1 | 2 | 3; // 0 rocky, 1 icy, 2 volcanic, 3 hazy
+
+// Map a moon id → visual profile. Tint biases the surface; haze adds a halo shell.
+function moonProfile(id: string): {
+  type: MoonType;
+  tint: string;
+  brightness: number;
+  haze?: { color: string; intensity: number };
+} {
+  switch (id) {
+    case 'io':         return { type: 2, tint: '#ffb96b', brightness: 1.05, haze: { color: '#ff8a3d', intensity: 0.25 } };
+    case 'europa':     return { type: 1, tint: '#e7d6b0', brightness: 1.10, haze: { color: '#cfe9ff', intensity: 0.22 } };
+    case 'enceladus':  return { type: 1, tint: '#f4faff', brightness: 1.20, haze: { color: '#e4f1ff', intensity: 0.35 } };
+    case 'titan':      return { type: 3, tint: '#d9a85d', brightness: 1.00, haze: { color: '#f0b878', intensity: 0.55 } };
+    case 'triton':     return { type: 1, tint: '#c2d6e8', brightness: 1.05, haze: { color: '#bcd8f0', intensity: 0.18 } };
+    case 'ganymede':   return { type: 0, tint: '#bcab94', brightness: 1.00 };
+    case 'callisto':   return { type: 0, tint: '#8d8070', brightness: 0.95 };
+    case 'luna':       return { type: 0, tint: '#d6d0c4', brightness: 1.05 };
+    case 'phobos':
+    case 'deimos':     return { type: 0, tint: '#a39684', brightness: 1.00 };
+    case 'miranda':
+    case 'ariel':      return { type: 1, tint: '#d8e2e6', brightness: 1.05 };
+    case 'titania':    return { type: 0, tint: '#b8a89a', brightness: 0.95 };
+    case 'oberon':     return { type: 0, tint: '#988779', brightness: 0.90 };
+    case 'proteus':    return { type: 0, tint: '#7e828a', brightness: 0.90 };
+    case 'nereid':     return { type: 0, tint: '#bdb9ac', brightness: 0.95 };
+    default:           return { type: 0, tint: '#bdbdbd', brightness: 1.00 };
+  }
+}
+
+const moonVert = /* glsl */`
+  varying vec3 vNormal;
+  varying vec3 vPos;
+  varying vec3 vWorldNormal;
+  void main() {
+    vNormal = normalize(normalMatrix * normal);
+    vWorldNormal = normalize(mat3(modelMatrix) * normal);
+    vPos = position;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  }
+`;
+
+// Cinematic moon shader: type-aware surface + Lambert sun + parent bounce + rim.
+const moonFrag = /* glsl */`
+  varying vec3 vNormal;
+  varying vec3 vPos;
+  varying vec3 vWorldNormal;
+  uniform float uTime;
+  uniform vec3 uColor;        // base albedo
+  uniform vec3 uTint;         // type-specific tint
+  uniform float uType;        // 0 rocky, 1 icy, 2 volcanic, 3 hazy
+  uniform float uBrightness;
+  uniform vec3 uSunDir;       // world dir from moon to sun (normalized)
+  uniform vec3 uBounceDir;    // world dir from moon to parent planet (normalized)
+  uniform vec3 uBounceColor;  // parent planet glow color
+
+  float hash(vec3 p){ p=fract(p*0.3183099+.1); p*=17.0; return fract(p.x*p.y*p.z*(p.x+p.y+p.z)); }
+  float noise(vec3 x){
+    vec3 p=floor(x); vec3 f=fract(x); f=f*f*(3.0-2.0*f);
+    return mix(mix(mix(hash(p+vec3(0,0,0)),hash(p+vec3(1,0,0)),f.x),
+                   mix(hash(p+vec3(0,1,0)),hash(p+vec3(1,1,0)),f.x),f.y),
+               mix(mix(hash(p+vec3(0,0,1)),hash(p+vec3(1,0,1)),f.x),
+                   mix(hash(p+vec3(0,1,1)),hash(p+vec3(1,1,1)),f.x),f.y),f.z);
+  }
+  float fbm(vec3 p){
+    float v=0.0; float a=0.5;
+    for(int i=0;i<4;i++){ v+=a*noise(p); p=p*2.05+1.3; a*=0.5; }
+    return v;
+  }
+
+  void main() {
+    vec3 p = normalize(vPos);
+    float n;
+    float hot = 0.0;
+    if (uType < 0.5) {
+      // rocky — craters (low-freq dark spots) + small detail
+      float craters = fbm(p * 3.2);
+      float detail  = fbm(p * 11.0);
+      n = mix(0.45, 1.0, craters) * 0.75 + detail * 0.25;
+    } else if (uType < 1.5) {
+      // icy — smoother, with crack-like striations
+      float ice = fbm(p * 2.6);
+      float cracks = smoothstep(0.45, 0.55, sin(p.y * 8.0 + fbm(p*4.0)*6.0)*0.5+0.5);
+      n = ice * 0.75 + cracks * 0.15 + 0.15;
+    } else if (uType < 2.5) {
+      // volcanic — high-contrast surface + hotspots
+      float base = fbm(p * 3.5);
+      n = base * 0.7 + 0.3;
+      hot = smoothstep(0.62, 0.92, fbm(p * 5.5 + vec3(uTime * 0.04)));
+    } else {
+      // hazy — soft, low-contrast surface
+      n = fbm(p * 2.0) * 0.45 + 0.55;
+    }
+    n = clamp(n, 0.0, 1.0);
+
+    vec3 albedo = mix(uColor * 0.55, mix(uColor, uTint, 0.5) * 1.15, n);
+    if (uType > 1.5 && uType < 2.5) {
+      // Io-style hot lava glow
+      albedo += vec3(1.0, 0.45, 0.10) * hot * 0.85;
+    }
+
+    vec3 N = normalize(vWorldNormal);
+
+    // Primary sunlight — Lambert with a small terminator softening
+    float NdotL = dot(N, uSunDir);
+    float diff = max(NdotL, 0.0);
+    // Soften the terminator so the dark side eases in instead of cliffing to black
+    float term = smoothstep(-0.25, 0.35, NdotL);
+
+    // Bounce light from parent planet — soft and tinted
+    float bN = max(dot(N, uBounceDir), 0.0);
+    vec3 bounce = uBounceColor * bN * 0.28;
+
+    // Tiny ambient floor so the moon never reads as pure black against space
+    vec3 ambient = vec3(0.045, 0.052, 0.075);
+
+    vec3 lit = albedo * (ambient + diff * 1.05 + bounce);
+    // re-add bounce as light too (slight extra without coloring the albedo too much)
+    lit += bounce * 0.35;
+
+    // Cinematic rim — strongest on the lit side, faint on the dark side for readability
+    float fres = pow(1.0 - max(dot(vNormal, vec3(0.0,0.0,1.0)), 0.0), 2.2);
+    vec3 rimColor = mix(uColor, vec3(1.0), 0.5);
+    lit += rimColor * fres * (0.18 + term * 0.55);
+    // Faint dark-side rim from bounce so the silhouette never disappears
+    lit += uBounceColor * fres * (1.0 - term) * 0.12;
+
+    // Visibility lift — gentle gamma so mid-tones stay readable
+    lit *= uBrightness;
+    lit = pow(lit, vec3(0.92));
+
+    gl_FragColor = vec4(lit, 1.0);
+  }
+`;
+
+const moonHazeFrag = /* glsl */`
+  varying vec3 vNormal;
+  varying vec3 vWorldNormal;
+  uniform vec3 uColor;
+  uniform float uIntensity;
+  uniform vec3 uSunDir;
+  void main() {
+    float fres = pow(1.0 - max(dot(vNormal, vec3(0.0,0.0,1.0)), 0.0), 2.0);
+    float lit = max(dot(normalize(vWorldNormal), uSunDir), 0.0);
+    float a = fres * (0.35 + lit * 0.75) * uIntensity;
+    gl_FragColor = vec4(uColor, a);
+  }
+`;
+
+function Moon({
+  moon,
+  planetRadius,
+  parentPlanetColor,
+  parentGroupRef,
+}: {
+  moon: NonNullable<PlanetData['moons']>[number];
+  planetRadius: number;
+  parentPlanetColor: string;
+  parentGroupRef: React.RefObject<THREE.Group>;
+}) {
   const ref = useRef<THREE.Mesh>(null!);
+  const matRef = useRef<THREE.ShaderMaterial>(null!);
+  const hazeMatRef = useRef<THREE.ShaderMaterial>(null!);
   const angleRef = useRef<number>(Math.random() * Math.PI * 2);
   const timeScale = useStore(s => s.timeScale);
-  useFrame((_, delta) => {
+
+  const profile = useMemo(() => moonProfile(moon.id), [moon.id]);
+
+  const uniforms = useMemo(() => ({
+    uTime: { value: 0 },
+    uColor: { value: new THREE.Color(moon.color) },
+    uTint: { value: new THREE.Color(profile.tint) },
+    uType: { value: profile.type as number },
+    uBrightness: { value: profile.brightness },
+    uSunDir: { value: new THREE.Vector3(1, 0, 0) },
+    uBounceDir: { value: new THREE.Vector3(-1, 0, 0) },
+    uBounceColor: { value: new THREE.Color(parentPlanetColor).multiplyScalar(0.35) },
+  }), [moon.color, profile, parentPlanetColor]);
+
+  const hazeUniforms = useMemo(() => profile.haze ? ({
+    uColor: { value: new THREE.Color(profile.haze.color) },
+    uIntensity: { value: profile.haze.intensity },
+    uSunDir: { value: uniforms.uSunDir.value },
+  }) : null, [profile, uniforms.uSunDir]);
+
+  // Tessellation: small moons need less than larger ones
+  const segs = moon.radius >= 0.18 ? 32 : 20;
+
+  useFrame((state, delta) => {
     angleRef.current += delta * moon.speed * 0.3 * timeScale;
     const d = planetRadius + moon.distance;
-    ref.current.position.x = Math.cos(angleRef.current) * d;
-    ref.current.position.z = Math.sin(angleRef.current) * d;
-    ref.current.rotation.y += delta * 0.5;
+    const m = ref.current;
+    if (!m) return;
+    m.position.x = Math.cos(angleRef.current) * d;
+    m.position.z = Math.sin(angleRef.current) * d;
+    m.rotation.y += delta * 0.5;
+
+    if (matRef.current && parentGroupRef.current) {
+      matRef.current.uniforms.uTime.value = state.clock.elapsedTime;
+
+      // World position of the moon (after the parent group + tilt rotations).
+      m.updateMatrixWorld();
+      m.getWorldPosition(_moonWorld);
+
+      // Sun is at world origin → sunDir = (origin - moon).normalize()
+      _sunDirTmp.copy(_moonWorld).multiplyScalar(-1).normalize();
+      matRef.current.uniforms.uSunDir.value.copy(_sunDirTmp);
+
+      // Bounce dir from moon → parent planet center
+      _bounceDirTmp.copy(parentGroupRef.current.position).sub(_moonWorld).normalize();
+      matRef.current.uniforms.uBounceDir.value.copy(_bounceDirTmp);
+    }
   });
+
   return (
-    <mesh ref={ref}>
-      <sphereGeometry args={[moon.radius, 24, 24]} />
-      <meshStandardMaterial color={moon.color} roughness={0.95} metalness={0.05} />
-    </mesh>
+    <group>
+      <mesh ref={ref}>
+        <sphereGeometry args={[moon.radius, segs, segs]} />
+        <shaderMaterial
+          ref={matRef}
+          vertexShader={moonVert}
+          fragmentShader={moonFrag}
+          uniforms={uniforms}
+        />
+        {profile.haze && hazeUniforms && (
+          <mesh scale={1.18}>
+            <sphereGeometry args={[moon.radius, Math.max(16, segs - 8), Math.max(16, segs - 8)]} />
+            <shaderMaterial
+              ref={hazeMatRef}
+              transparent
+              depthWrite={false}
+              blending={THREE.AdditiveBlending}
+              side={THREE.BackSide}
+              uniforms={hazeUniforms}
+              vertexShader={moonVert}
+              fragmentShader={moonHazeFrag}
+            />
+          </mesh>
+        )}
+      </mesh>
+    </group>
   );
 }

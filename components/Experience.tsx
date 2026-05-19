@@ -28,22 +28,24 @@ export default function Experience() {
   return (
     <>
       <Canvas
-        dpr={[1, 2]}
+        dpr={[1, 1.5]}
+        performance={{ min: 0.5 }}
         gl={{
           antialias: true,
           powerPreference: 'high-performance',
           alpha: false,
           stencil: false,
+          toneMappingExposure: 1.05,
         }}
         camera={{ position: [0, 50, 110], fov: 45, near: 0.1, far: 2000 }}
       >
-        <color attach="background" args={['#03040a']} />
-        <fog attach="fog" args={['#03040a', 200, 700]} />
+        <color attach="background" args={['#010206']} />
+        <fog attach="fog" args={['#010206', 260, 820]} />
 
         <AdaptiveDpr pixelated />
         <AdaptiveEvents />
 
-        <ambientLight intensity={0.04} color="#9bb4ff" />
+        <ambientLight intensity={0.025} color="#7a8fb0" />
 
         <Suspense fallback={null}>
           <Background />
