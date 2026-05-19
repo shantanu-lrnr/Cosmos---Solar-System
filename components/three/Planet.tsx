@@ -333,7 +333,7 @@ const _moonWorld = new THREE.Vector3();
 const _sunDirTmp = new THREE.Vector3();
 const _bounceDirTmp = new THREE.Vector3();
 
-type MoonType = 0 | 1 | 2 | 3; // 0 rocky, 1 icy, 2 volcanic, 3 hazy
+type MoonType = 0 | 1 | 2 | 3 | 4; // 0 rocky · 1 icy · 2 volcanic · 3 hazy · 4 dual-tone
 
 // Map a moon id → visual profile. Tint biases the surface; haze adds a halo shell.
 function moonProfile(id: string): {
@@ -343,24 +343,63 @@ function moonProfile(id: string): {
   haze?: { color: string; intensity: number };
 } {
   switch (id) {
+    // ── Jupiter system ─────────────────────────────────────────
     case 'io':         return { type: 2, tint: '#ffb96b', brightness: 1.05, haze: { color: '#ff8a3d', intensity: 0.25 } };
     case 'europa':     return { type: 1, tint: '#e7d6b0', brightness: 1.10, haze: { color: '#cfe9ff', intensity: 0.22 } };
-    case 'enceladus':  return { type: 1, tint: '#f4faff', brightness: 1.20, haze: { color: '#e4f1ff', intensity: 0.35 } };
-    case 'titan':      return { type: 3, tint: '#d9a85d', brightness: 1.00, haze: { color: '#f0b878', intensity: 0.55 } };
-    case 'triton':     return { type: 1, tint: '#c2d6e8', brightness: 1.05, haze: { color: '#bcd8f0', intensity: 0.18 } };
     case 'ganymede':   return { type: 0, tint: '#bcab94', brightness: 1.00 };
     case 'callisto':   return { type: 0, tint: '#8d8070', brightness: 0.95 };
+    case 'amalthea':   return { type: 0, tint: '#d27a5a', brightness: 1.10 };
+    case 'thebe':      return { type: 0, tint: '#a09280', brightness: 0.95 };
+    case 'adrastea':   return { type: 0, tint: '#c8baa8', brightness: 1.00 };
+    case 'himalia':    return { type: 0, tint: '#7c726a', brightness: 0.85 };
+    case 'elara':      return { type: 0, tint: '#897e72', brightness: 0.85 };
+    case 'pasiphae':   return { type: 0, tint: '#564f48', brightness: 0.80 };
+
+    // ── Saturn system ──────────────────────────────────────────
+    case 'janus':      return { type: 0, tint: '#c4bcaa', brightness: 1.00 };
+    case 'epimetheus': return { type: 0, tint: '#b8b09e', brightness: 0.95 };
+    case 'mimas':      return { type: 1, tint: '#e8eaec', brightness: 1.10 };
+    case 'enceladus':  return { type: 1, tint: '#f4faff', brightness: 1.25, haze: { color: '#e4f1ff', intensity: 0.40 } };
+    case 'tethys':     return { type: 1, tint: '#eff2f5', brightness: 1.15 };
+    case 'dione':      return { type: 1, tint: '#d4d8db', brightness: 1.05 };
+    case 'rhea':       return { type: 1, tint: '#dde0e2', brightness: 1.05 };
+    case 'titan':      return { type: 3, tint: '#d9a85d', brightness: 1.00, haze: { color: '#f0b878', intensity: 0.60 } };
+    case 'hyperion':   return { type: 0, tint: '#c1a37a', brightness: 1.00 };
+    case 'iapetus':    return { type: 4, tint: '#e8eef0', brightness: 1.05 }; // dual-tone
+    case 'phoebe':     return { type: 0, tint: '#4d473f', brightness: 0.80 };
+
+    // ── Uranus system ──────────────────────────────────────────
+    case 'portia':     return { type: 0, tint: '#a09c97', brightness: 0.95 };
+    case 'puck':       return { type: 0, tint: '#9a9692', brightness: 0.95 };
+    case 'miranda':    return { type: 1, tint: '#d8e2e6', brightness: 1.05 };
+    case 'ariel':      return { type: 1, tint: '#d8e2e6', brightness: 1.05 };
+    case 'umbriel':    return { type: 1, tint: '#7a7d82', brightness: 0.90 };
+    case 'titania':    return { type: 0, tint: '#b8a89a', brightness: 0.95 };
+    case 'oberon':     return { type: 0, tint: '#988779', brightness: 0.90 };
+
+    // ── Neptune system ─────────────────────────────────────────
+    case 'despina':    return { type: 0, tint: '#8d8f93', brightness: 0.90 };
+    case 'galatea':    return { type: 0, tint: '#92949a', brightness: 0.90 };
+    case 'larissa':    return { type: 0, tint: '#82848a', brightness: 0.90 };
+    case 'proteus':    return { type: 0, tint: '#7e828a', brightness: 0.90 };
+    case 'triton':     return { type: 1, tint: '#dde6ee', brightness: 1.10, haze: { color: '#bcd8f0', intensity: 0.25 } };
+    case 'nereid':     return { type: 0, tint: '#bdb9ac', brightness: 0.95 };
+
+    // ── Inner planets ──────────────────────────────────────────
     case 'luna':       return { type: 0, tint: '#d6d0c4', brightness: 1.05 };
     case 'phobos':
     case 'deimos':     return { type: 0, tint: '#a39684', brightness: 1.00 };
-    case 'miranda':
-    case 'ariel':      return { type: 1, tint: '#d8e2e6', brightness: 1.05 };
-    case 'titania':    return { type: 0, tint: '#b8a89a', brightness: 0.95 };
-    case 'oberon':     return { type: 0, tint: '#988779', brightness: 0.90 };
-    case 'proteus':    return { type: 0, tint: '#7e828a', brightness: 0.90 };
-    case 'nereid':     return { type: 0, tint: '#bdb9ac', brightness: 0.95 };
+
     default:           return { type: 0, tint: '#bdbdbd', brightness: 1.00 };
   }
+}
+
+// Deterministic 0..1 hash from a moon id — used to give each moon a unique
+// ascending-node rotation so inclined orbits don't all share a plane.
+function hashStr(s: string): number {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = ((h * 31) + s.charCodeAt(i)) | 0;
+  return Math.abs(h % 100000) / 100000;
 }
 
 const moonVert = /* glsl */`
@@ -422,13 +461,25 @@ const moonFrag = /* glsl */`
       float base = fbm(p * 3.5);
       n = base * 0.7 + 0.3;
       hot = smoothstep(0.62, 0.92, fbm(p * 5.5 + vec3(uTime * 0.04)));
-    } else {
+    } else if (uType < 3.5) {
       // hazy — soft, low-contrast surface
       n = fbm(p * 2.0) * 0.45 + 0.55;
+    } else {
+      // dual-tone hemisphere (Iapetus — leading dark, trailing icy bright)
+      float boundary = smoothstep(-0.22, 0.22, p.x + fbm(p * 2.0) * 0.20);
+      float dark = fbm(p * 3.5) * 0.20 + 0.04;
+      float bright = fbm(p * 3.0) * 0.40 + 0.55;
+      n = mix(dark, bright, boundary);
     }
     n = clamp(n, 0.0, 1.0);
 
-    vec3 albedo = mix(uColor * 0.55, mix(uColor, uTint, 0.5) * 1.15, n);
+    vec3 albedo;
+    if (uType > 3.5) {
+      // Dual-tone: hard contrast between uColor (dark) and uTint (icy bright)
+      albedo = mix(uColor * 0.45, uTint * 1.10, n);
+    } else {
+      albedo = mix(uColor * 0.55, mix(uColor, uTint, 0.5) * 1.15, n);
+    }
     if (uType > 1.5 && uType < 2.5) {
       // Io-style hot lava glow
       albedo += vec3(1.0, 0.45, 0.10) * hot * 0.85;
@@ -501,6 +552,11 @@ function Moon({
 
   const profile = useMemo(() => moonProfile(moon.id), [moon.id]);
 
+  // Each moon's orbital plane: unique ascending-node rotation around Y so
+  // inclined orbits don't all share the same plane.
+  const ascendingNode = useMemo(() => hashStr(moon.id) * Math.PI * 2, [moon.id]);
+  const inclination = moon.inclination ?? 0;
+
   const uniforms = useMemo(() => ({
     uTime: { value: 0 },
     uColor: { value: new THREE.Color(moon.color) },
@@ -548,31 +604,36 @@ function Moon({
   });
 
   return (
-    <group>
-      <mesh ref={ref}>
-        <sphereGeometry args={[moon.radius, segs, segs]} />
-        <shaderMaterial
-          ref={matRef}
-          vertexShader={moonVert}
-          fragmentShader={moonFrag}
-          uniforms={uniforms}
-        />
-        {profile.haze && hazeUniforms && (
-          <mesh scale={1.18}>
-            <sphereGeometry args={[moon.radius, Math.max(16, segs - 8), Math.max(16, segs - 8)]} />
-            <shaderMaterial
-              ref={hazeMatRef}
-              transparent
-              depthWrite={false}
-              blending={THREE.AdditiveBlending}
-              side={THREE.BackSide}
-              uniforms={hazeUniforms}
-              vertexShader={moonVert}
-              fragmentShader={moonHazeFrag}
-            />
-          </mesh>
-        )}
-      </mesh>
+    // Outer group: ascending-node rotation around Y (so two inclined moons
+    // don't share the exact same orbital plane).
+    <group rotation={[0, ascendingNode, 0]}>
+      {/* Inner group: inclination tilt around X (the orbital plane itself). */}
+      <group rotation={[inclination, 0, 0]}>
+        <mesh ref={ref}>
+          <sphereGeometry args={[moon.radius, segs, segs]} />
+          <shaderMaterial
+            ref={matRef}
+            vertexShader={moonVert}
+            fragmentShader={moonFrag}
+            uniforms={uniforms}
+          />
+          {profile.haze && hazeUniforms && (
+            <mesh scale={1.18}>
+              <sphereGeometry args={[moon.radius, Math.max(16, segs - 8), Math.max(16, segs - 8)]} />
+              <shaderMaterial
+                ref={hazeMatRef}
+                transparent
+                depthWrite={false}
+                blending={THREE.AdditiveBlending}
+                side={THREE.BackSide}
+                uniforms={hazeUniforms}
+                vertexShader={moonVert}
+                fragmentShader={moonHazeFrag}
+              />
+            </mesh>
+          )}
+        </mesh>
+      </group>
     </group>
   );
 }

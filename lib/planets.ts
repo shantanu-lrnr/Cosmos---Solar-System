@@ -17,8 +17,9 @@ export type Moon = {
   name: string;
   radius: number;
   distance: number;
-  speed: number;
+  speed: number;      // negative = retrograde orbit
   color: string;
+  inclination?: number; // radians, orbital tilt vs. the planet equator
 };
 
 export type Planet = {
@@ -238,10 +239,17 @@ export const PLANETS: Planet[] = [
     axialTilt: 0.05,
     color: { primary: '#e7c8a0', secondary: '#8a5a32', glow: '#f5d9a8' },
     moons: [
-      { id: 'io', name: 'Io', radius: 0.18, distance: 5.2, speed: 1.8, color: '#f3d36b' },
-      { id: 'europa', name: 'Europa', radius: 0.16, distance: 6.4, speed: 1.3, color: '#e7d6b0' },
-      { id: 'ganymede', name: 'Ganymede', radius: 0.22, distance: 7.8, speed: 0.95, color: '#b8a890' },
-      { id: 'callisto', name: 'Callisto', radius: 0.2, distance: 9.4, speed: 0.7, color: '#827566' },
+      // Inner small moons
+      { id: 'amalthea', name: 'Amalthea', radius: 0.09, distance: 4.55, speed: 2.25, color: '#b06149', inclination: 0.04 },
+      { id: 'thebe',    name: 'Thebe',    radius: 0.07, distance: 4.95, speed: 2.05, color: '#8a7c6e', inclination: 0.07 },
+      // Galilean moons
+      { id: 'io',       name: 'Io',       radius: 0.18, distance: 5.40, speed: 1.80, color: '#f3d36b' },
+      { id: 'europa',   name: 'Europa',   radius: 0.16, distance: 6.40, speed: 1.30, color: '#e7d6b0' },
+      { id: 'ganymede', name: 'Ganymede', radius: 0.22, distance: 7.80, speed: 0.95, color: '#b8a890' },
+      { id: 'callisto', name: 'Callisto', radius: 0.20, distance: 9.40, speed: 0.70, color: '#827566' },
+      // Outer irregular moons — inclined + retrograde for variety
+      { id: 'himalia',  name: 'Himalia',  radius: 0.07, distance: 12.0, speed:  0.32, color: '#5a544e', inclination: 0.50 },
+      { id: 'pasiphae', name: 'Pasiphae', radius: 0.05, distance: 15.5, speed: -0.16, color: '#3e3934', inclination: 0.80 },
     ],
     facts: {
       diameter: '139,820 km',
@@ -276,8 +284,16 @@ export const PLANETS: Planet[] = [
     color: { primary: '#e9d49b', secondary: '#8a6a3a', glow: '#fde6b1' },
     ring: { inner: 4, outer: 6.5, color: '#e9d49b', opacity: 0.85, tilt: 0.42 },
     moons: [
-      { id: 'titan', name: 'Titan', radius: 0.25, distance: 8, speed: 0.8, color: '#d4a85f' },
-      { id: 'enceladus', name: 'Enceladus', radius: 0.1, distance: 9.2, speed: 1.1, color: '#eef6ff' },
+      // The six major rounded moons (inner → outer)
+      { id: 'mimas',     name: 'Mimas',     radius: 0.09, distance:  7.40, speed: 1.55, color: '#d6d8db' },
+      { id: 'enceladus', name: 'Enceladus', radius: 0.10, distance:  8.10, speed: 1.30, color: '#eef6ff' },
+      { id: 'tethys',    name: 'Tethys',    radius: 0.12, distance:  8.80, speed: 1.10, color: '#e6ecef' },
+      { id: 'dione',     name: 'Dione',     radius: 0.13, distance:  9.60, speed: 0.90, color: '#c4c8cb' },
+      { id: 'rhea',      name: 'Rhea',      radius: 0.15, distance: 10.60, speed: 0.75, color: '#cfd3d5' },
+      { id: 'titan',     name: 'Titan',     radius: 0.25, distance: 12.50, speed: 0.50, color: '#d4a85f' },
+      // Outer — dual-tone Iapetus + retrograde Phoebe
+      { id: 'iapetus',   name: 'Iapetus',   radius: 0.14, distance: 16.00, speed:  0.27, color: '#4a3c30', inclination: 0.27 },
+      { id: 'phoebe',    name: 'Phoebe',    radius: 0.06, distance: 19.00, speed: -0.14, color: '#3a352f', inclination: 0.60 },
     ],
     facts: {
       diameter: '116,460 km',
@@ -313,10 +329,13 @@ export const PLANETS: Planet[] = [
     atmosphere: { color: '#a5f3fc', intensity: 0.5 },
     ring: { inner: 2.6, outer: 3.2, color: '#9fe1e0', opacity: 0.35, tilt: 1.5 },
     moons: [
-      { id: 'miranda', name: 'Miranda', radius: 0.08, distance: 4.0, speed: 1.6, color: '#cdd6db' },
-      { id: 'ariel', name: 'Ariel', radius: 0.13, distance: 5.0, speed: 1.2, color: '#d8e2e6' },
-      { id: 'titania', name: 'Titania', radius: 0.18, distance: 6.5, speed: 0.85, color: '#b8a89a' },
-      { id: 'oberon', name: 'Oberon', radius: 0.16, distance: 8.0, speed: 0.70, color: '#8e8076' },
+      { id: 'portia',  name: 'Portia',  radius: 0.06, distance: 2.70, speed: 1.90, color: '#918d88' },
+      { id: 'puck',    name: 'Puck',    radius: 0.07, distance: 3.05, speed: 1.75, color: '#8a8783' },
+      { id: 'miranda', name: 'Miranda', radius: 0.08, distance: 3.90, speed: 1.50, color: '#cdd6db' },
+      { id: 'ariel',   name: 'Ariel',   radius: 0.13, distance: 4.80, speed: 1.20, color: '#d8e2e6' },
+      { id: 'umbriel', name: 'Umbriel', radius: 0.13, distance: 5.80, speed: 1.00, color: '#6a6c70' },
+      { id: 'titania', name: 'Titania', radius: 0.18, distance: 7.00, speed: 0.75, color: '#b8a89a' },
+      { id: 'oberon',  name: 'Oberon',  radius: 0.16, distance: 8.50, speed: 0.60, color: '#8e8076' },
     ],
     facts: {
       diameter: '50,724 km',
@@ -351,9 +370,13 @@ export const PLANETS: Planet[] = [
     color: { primary: '#3b6fe0', secondary: '#1e3a8a', glow: '#5b8def' },
     atmosphere: { color: '#5b8def', intensity: 0.9 },
     moons: [
-      { id: 'proteus', name: 'Proteus', radius: 0.10, distance: 3.2, speed: 1.4, color: '#7a7e85' },
-      { id: 'triton', name: 'Triton', radius: 0.18, distance: 4.5, speed: 1.0, color: '#cdd6e6' },
-      { id: 'nereid', name: 'Nereid', radius: 0.08, distance: 6.5, speed: 0.55, color: '#b9b6a8' },
+      { id: 'despina', name: 'Despina', radius: 0.05, distance: 2.55, speed: 2.20, color: '#7a7b7e' },
+      { id: 'galatea', name: 'Galatea', radius: 0.06, distance: 2.85, speed: 1.95, color: '#7d7e80' },
+      { id: 'larissa', name: 'Larissa', radius: 0.06, distance: 3.25, speed: 1.65, color: '#6d6e72' },
+      { id: 'proteus', name: 'Proteus', radius: 0.10, distance: 3.70, speed: 1.35, color: '#7a7e85' },
+      // Triton — retrograde + highly inclined (Neptune's iconic moon)
+      { id: 'triton',  name: 'Triton',  radius: 0.18, distance: 5.40, speed: -1.00, color: '#cdd6e6', inclination: 0.45 },
+      { id: 'nereid',  name: 'Nereid',  radius: 0.08, distance: 8.00, speed:  0.40, color: '#b9b6a8', inclination: 0.50 },
     ],
     facts: {
       diameter: '49,244 km',
