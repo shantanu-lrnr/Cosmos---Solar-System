@@ -71,8 +71,7 @@ const sunFrag = /* glsl */ `
     vec3 p = normalize(vPos);
     float n = snoise(p * 2.5 + vec3(uTime * 0.06));
     float n2 = snoise(p * 6.0 + vec3(uTime * 0.12));
-    float n3 = snoise(p * 14.0 - vec3(uTime * 0.2));
-    float h = n * 0.6 + n2 * 0.3 + n3 * 0.15;
+    float h = n * 0.65 + n2 * 0.35;
     h = smoothstep(-0.4, 0.9, h);
     vec3 col = mix(uColorB, uColorA, h);
     // hot bright spots
@@ -116,7 +115,7 @@ export default function Sun() {
         onPointerOut={(e) => { e.stopPropagation(); setHovered(null); document.body.style.cursor = 'auto'; }}
         onClick={(e) => { e.stopPropagation(); setSelected('sun'); }}
       >
-        <sphereGeometry args={[SUN.radius, 96, 96]} />
+        <sphereGeometry args={[SUN.radius, 64, 64]} />
         <shaderMaterial
           ref={matRef}
           vertexShader={sunVert}
@@ -131,7 +130,7 @@ export default function Sun() {
 
       {/* Soft glow shell */}
       <mesh ref={glowRef}>
-        <sphereGeometry args={[SUN.radius * 1.35, 64, 64]} />
+        <sphereGeometry args={[SUN.radius * 1.35, 40, 40]} />
         <shaderMaterial
           transparent
           depthWrite={false}
@@ -157,7 +156,7 @@ export default function Sun() {
 
       {/* Outer corona */}
       <mesh>
-        <sphereGeometry args={[SUN.radius * 2.4, 48, 48]} />
+        <sphereGeometry args={[SUN.radius * 2.4, 32, 32]} />
         <shaderMaterial
           transparent
           depthWrite={false}
