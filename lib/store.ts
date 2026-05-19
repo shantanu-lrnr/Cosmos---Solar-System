@@ -32,7 +32,7 @@ export const useStore = create<State>((set) => ({
   timeScale: 1,
   showOrbits: true,
   showLabels: true,
-  audioOn: false,
+  audioOn: true,
   introDone: false,
   tourMode: false,
   ready: false,

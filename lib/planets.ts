@@ -66,13 +66,13 @@ export const PLANETS: Planet[] = [
     orbitSpeed: 0,
     rotationSpeed: 0.04,
     axialTilt: 0.12,
-    emissive: 2.4,
+    emissive: 2.0,
     color: {
-      primary: '#fff2c2',
-      secondary: '#ff9c3a',
-      glow: '#ffb547',
+      primary: '#ffb058',
+      secondary: '#ff7028',
+      glow: '#ff9542',
     },
-    atmosphere: { color: '#ffae3b', intensity: 1.4 },
+    atmosphere: { color: '#ff8a3d', intensity: 1.2 },
     facts: {
       diameter: '1,391,400 km',
       mass: '1.989 × 10³⁰ kg',

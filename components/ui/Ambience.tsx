@@ -35,11 +35,24 @@ export default function Ambience() {
     const duration = audioOn ? FADE_IN_MS : FADE_OUT_MS;
     const startTime = performance.now();
 
+    let unlockCleanup: (() => void) | null = null;
+
     if (audioOn) {
-      // .play() returns a Promise — autoplay policy lets it through here
-      // because the toggle click is the originating user gesture.
-      a.play().catch(() => {
-        // File missing or blocked — silent failure, no UI noise
+      const tryPlay = () => a.play();
+      tryPlay().catch(() => {
+        // Browser blocked autoplay — wait for the first user interaction
+        // anywhere on the page, then start. Works for the intro screen
+        // where the page loads with audioOn=true but no gesture yet.
+        const unlock = () => {
+          tryPlay().catch(() => {});
+          if (unlockCleanup) unlockCleanup();
+        };
+        const events: Array<keyof WindowEventMap> = ['pointerdown', 'keydown', 'touchstart'];
+        events.forEach(e => window.addEventListener(e, unlock, { once: true, passive: true }));
+        unlockCleanup = () => {
+          events.forEach(e => window.removeEventListener(e, unlock));
+          unlockCleanup = null;
+        };
       });
     }
 
@@ -61,6 +74,7 @@ export default function Ambience() {
 
     return () => {
       if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+      if (unlockCleanup) unlockCleanup();
     };
   }, [audioOn]);
 

@@ -1,6 +1,6 @@
 'use client';
-import { EffectComposer, Bloom, Vignette, Noise, SMAA } from '@react-three/postprocessing';
-import { BlendFunction, KernelSize } from 'postprocessing';
+import { EffectComposer, Bloom, Vignette, SMAA } from '@react-three/postprocessing';
+import { KernelSize } from 'postprocessing';
 
 // Cinematic post-processing tuned for realistic deep-space.
 //  - Bloom: low threshold + large kernel so the sun and bright stars halo softly,
@@ -15,13 +15,12 @@ export default function Effects() {
     <EffectComposer multisampling={0} enableNormalPass={false}>
       <Bloom
         intensity={0.85}
-        luminanceThreshold={0.62}
+        luminanceThreshold={0.95}
         luminanceSmoothing={0.32}
         mipmapBlur
         kernelSize={KernelSize.MEDIUM}
       />
       <Vignette eskil={false} offset={0.28} darkness={0.92} />
-      <Noise opacity={0.022} blendFunction={BlendFunction.OVERLAY} />
       <SMAA />
     </EffectComposer>
   );

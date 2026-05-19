@@ -115,10 +115,7 @@ function StarLayer({
     return { positions, colors, sizes, twinkleSeeds };
   }, [count, radius, sizeMin, sizeMax, bandBias, bright, G_AXIS]);
 
-  useFrame((state, delta) => {
-    if (ref.current) ref.current.rotation.y += delta * 0.0015;
-    if (matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime;
-  });
+  // No per-frame updates — stars are completely static (no twinkle, no drift).
 
   return (
     <points ref={ref}>
@@ -144,9 +141,8 @@ function StarLayer({
           uniform float uTime;
           void main(){
             vColor = color;
-            // Subtle, slow twinkle — every star desyncs via aSeed
-            float t = sin(uTime * 1.1 + aSeed * 6.283) * 0.5 + 0.5;
-            vTwinkle = 0.75 + t * 0.35;
+            // Twinkle disabled — keep brightness/size steady per frame
+            vTwinkle = 1.0;
             vSize = aSize;
             vec4 mv = modelViewMatrix * vec4(position, 1.0);
             gl_PointSize = aSize * (320.0 / -mv.z) * vTwinkle;
