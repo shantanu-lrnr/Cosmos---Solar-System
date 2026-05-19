@@ -42,9 +42,3 @@ desktop.ini
 
 # TypeScript
 *.tsbuildinfo
-
-# Claude Code local settings
-.claude/settings.local.json
-
-# Local-only audio (kept out of git for licensing safety)
-public/audio/
