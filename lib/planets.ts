@@ -22,6 +22,14 @@ export type Moon = {
   inclination?: number; // radians, orbital tilt vs. the planet equator
 };
 
+export type PlanetMetrics = {
+  gravityG: number;       // multiples of Earth gravity
+  diameterEarth: number;  // multiples of Earth diameter
+  dayHours: number;       // length of one solar day in hours
+  yearDays: number;       // year in Earth days (0 = N/A)
+  realAU: number;         // mean orbital distance from Sun in AU
+};
+
 export type Planet = {
   id: string;
   name: string;
@@ -52,6 +60,10 @@ export type Planet = {
   };
   description: string;
   funFacts: string[];
+  metrics: PlanetMetrics;
+  signature?: string;
+  missions?: string[];
+  skyFromHere?: string;
 };
 
 // Scene scale: not to real scale. Distances/sizes chosen for cinematic readability.
@@ -92,6 +104,10 @@ export const PLANETS: Planet[] = [
       'Light takes ~8 minutes 20 seconds to reach Earth',
       'A single sunspot can be larger than our planet',
     ],
+    metrics: { gravityG: 28, diameterEarth: 109, dayHours: 648, yearDays: 0, realAU: 0 },
+    signature: 'Sunspots — magnetic storms larger than Earth',
+    missions: ['Parker Solar Probe', 'SOHO', 'Solar Orbiter', 'Ulysses', 'SDO', 'Helios 1', 'Helios 2', 'STEREO'],
+    skyFromHere: 'Blinding white-hot plasma fills every direction.',
   },
   {
     id: 'mercury',
@@ -123,6 +139,10 @@ export const PLANETS: Planet[] = [
       'It has wrinkles called "Lobate Scarps"',
       'Its iron core takes up ~75% of its radius',
     ],
+    metrics: { gravityG: 0.38, diameterEarth: 0.38, dayHours: 1407.5, yearDays: 88, realAU: 0.39 },
+    signature: 'Caloris Basin — a 1,550 km impact crater',
+    missions: ['Mariner 10', 'MESSENGER', 'BepiColombo'],
+    skyFromHere: 'The Sun looms 3× larger; the sky is pitch black even at noon.',
   },
   {
     id: 'venus',
@@ -155,6 +175,10 @@ export const PLANETS: Planet[] = [
       'A day on Venus is longer than its year',
       'Atmospheric pressure is 92× that of Earth',
     ],
+    metrics: { gravityG: 0.91, diameterEarth: 0.95, dayHours: 5832, yearDays: 225, realAU: 0.72 },
+    signature: 'Maat Mons — an 8 km active volcano',
+    missions: ['Venera 7', 'Magellan', 'Mariner 2', 'Pioneer Venus', 'Akatsuki', 'Mariner 5', 'Vega 1', 'Vega 2', 'DAVINCI'],
+    skyFromHere: 'Perpetual orange overcast — the Sun never breaks through the clouds.',
   },
   {
     id: 'earth',
@@ -190,6 +214,10 @@ export const PLANETS: Planet[] = [
       'Has a powerful magnetosphere shielding us from solar wind',
       'The Moon is moving away ~3.8 cm/year',
     ],
+    metrics: { gravityG: 1, diameterEarth: 1, dayHours: 24, yearDays: 365.25, realAU: 1 },
+    signature: 'The only world known to harbor life',
+    missions: ['Apollo 11', 'Hubble', 'ISS', 'JWST', 'Voyager 1', 'Mir', 'Skylab', 'Tiangong'],
+    skyFromHere: 'Blue by day, starlit by night — one pale Moon for company.',
   },
   {
     id: 'mars',
@@ -226,6 +254,10 @@ export const PLANETS: Planet[] = [
       'Mars has seasons like Earth',
       'Dust storms can engulf the entire planet',
     ],
+    metrics: { gravityG: 0.38, diameterEarth: 0.53, dayHours: 24.6, yearDays: 687, realAU: 1.52 },
+    signature: 'Olympus Mons — 22 km tall, nearly 3× Everest',
+    missions: ['Viking 1', 'Curiosity', 'Perseverance', 'Ingenuity', 'Opportunity', 'Spirit', 'Pathfinder', 'Viking 2', 'Mariner 4', 'MAVEN', 'InSight', 'Tianwen-1'],
+    skyFromHere: 'Butterscotch sky by day, blue at sunset; two potato moons race overhead.',
   },
   {
     id: 'jupiter',
@@ -270,6 +302,10 @@ export const PLANETS: Planet[] = [
       'Its moon Europa hides a subsurface ocean',
       'Jupiter shields inner planets from comets',
     ],
+    metrics: { gravityG: 2.53, diameterEarth: 10.97, dayHours: 9.93, yearDays: 4333, realAU: 5.2 },
+    signature: 'Great Red Spot — a 350-year-old storm wider than Earth',
+    missions: ['Voyager 1', 'Voyager 2', 'Galileo', 'Juno', 'Pioneer 10', 'Pioneer 11', 'Europa Clipper'],
+    skyFromHere: 'Banded clouds stretch to infinity; the Sun is 1/25th its Earth size.',
   },
   {
     id: 'saturn',
@@ -314,6 +350,10 @@ export const PLANETS: Planet[] = [
       'Hosts a hexagonal storm at its north pole',
       'Titan has lakes of liquid methane',
     ],
+    metrics: { gravityG: 1.07, diameterEarth: 9.14, dayHours: 10.7, yearDays: 10759, realAU: 9.58 },
+    signature: 'The rings — 282,000 km wide, only 10 m thick',
+    missions: ['Cassini–Huygens', 'Voyager 1', 'Voyager 2', 'Pioneer 11'],
+    skyFromHere: 'The Sun is 1/100th as bright; the rings arc majestically across the heavens.',
   },
   {
     id: 'uranus',
@@ -356,6 +396,10 @@ export const PLANETS: Planet[] = [
       'Has 13 known faint rings',
       'Coldest planetary atmosphere in the solar system',
     ],
+    metrics: { gravityG: 0.91, diameterEarth: 3.98, dayHours: 17.24, yearDays: 30687, realAU: 19.2 },
+    signature: 'Tilted 98° — it rolls along its orbit like a barrel',
+    missions: ['Voyager 2 (1986 flyby)'],
+    skyFromHere: 'Pale teal twilight at every hour; the Sun is a brilliant but distant star.',
   },
   {
     id: 'neptune',
@@ -397,6 +441,10 @@ export const PLANETS: Planet[] = [
       'First planet discovered through prediction',
       'One orbit equals 165 Earth years',
     ],
+    metrics: { gravityG: 1.14, diameterEarth: 3.86, dayHours: 16.11, yearDays: 60190, realAU: 30.05 },
+    signature: 'Supersonic winds reaching 2,100 km/h — the fastest in the solar system',
+    missions: ['Voyager 2 (1989 flyby)'],
+    skyFromHere: 'The Sun is a brilliant pinpoint, 900× dimmer than from Earth.',
   },
 ];
 
