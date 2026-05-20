@@ -5,7 +5,7 @@ import { useStore } from '@/lib/store';
 // Drop your audio file at: public/audio/space-ambience.mp3
 // (.ogg / .wav also fine — just change AUDIO_SRC)
 const AUDIO_SRC = '/audio/space-ambience.mp3';
-const TARGET_VOLUME = 0.5;
+const TARGET_VOLUME = 1.0;
 const FADE_IN_MS = 150;
 const FADE_OUT_MS = 600;
 

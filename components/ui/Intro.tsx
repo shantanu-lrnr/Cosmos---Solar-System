@@ -38,7 +38,7 @@ export default function Intro() {
               animate={{ letterSpacing: '0.5em', opacity: 1, transition: { duration: 1.8, delay: 0.4 } }}
               className="text-[10px] md:text-xs uppercase text-cosmos-accent/80 mb-5"
             >
-              Anthropic Stellar Observatory
+              Shantanu Stellar Observatory
             </motion.div>
 
             <motion.h1
